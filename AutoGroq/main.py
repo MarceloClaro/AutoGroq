@@ -1,21 +1,29 @@
-import streamlit as st 
+Aqui está a tradução do código com comentários em português explicando as funções para leigos que nunca viram o código:
 
-from config import MODEL_TOKEN_LIMITS
+```python
+import streamlit as st
 
-from agent_management import display_agents
-from ui_utils import get_api_key, display_api_key_input, display_discussion_and_whiteboard, display_download_button, display_user_input, display_rephrased_request, display_reset_and_upload_buttons, display_user_request_input, rephrase_prompt, get_agents_from_text, extract_code_from_response, get_workflow_from_agents
+# Importa os limites de tokens para cada modelo
+from config import LIMITES_TOKENS_MODELO
+
+# Importa funções relacionadas ao gerenciamento de agentes
+from agent_management import exibir_agentes
+
+# Importa funções relacionadas à interface do usuário
+from ui_utils import obter_chave_api, exibir_entrada_chave_api, exibir_discussao_e_whiteboard, exibir_botao_download, exibir_entrada_usuario, exibir_solicitacao_reformulada, exibir_botoes_resetar_e_enviar, exibir_entrada_solicitacao_usuario, reformular_prompt, obter_agentes_de_texto, extrair_codigo_da_resposta, obter_workflow_de_agentes
 
 
-def main(): 
+def main():
+    # Adiciona estilos CSS personalizados à página
     st.markdown("""
         <style>
-        /* General styles */
+        /* Estilos gerais */
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
         }
 
-        /* Sidebar styles */
+        /* Estilos da barra lateral */
         .sidebar .sidebar-content {
             background-color: #ffffff !important;
             padding: 20px !important;
@@ -60,7 +68,7 @@ def main():
             text-decoration: underline !important;
         }
 
-        /* Main content styles */
+        /* Estilos do conteúdo principal */
         .main .stTextInput input {
             width: 100% !important;
             padding: 10px !important;
@@ -96,7 +104,7 @@ def main():
             color: #007bff !important;
         }
 
-        /* Model selection styles */
+        /* Estilos de seleção de modelo */
         .main .stSelectbox select {
             width: 100% !important;
             padding: 10px !important;
@@ -104,77 +112,78 @@ def main():
             border-radius: 5px !important;
         }
 
-        /* Error message styles */
+        /* Estilos de mensagem de erro */
         .main .stAlert {
             color: #dc3545 !important;
         }
         </style>
         """, unsafe_allow_html=True)
     
-    model_token_limits = { 
-        'llama3-70b-8192': 8192, 
-        'llama3-8b-8192': 8192, 
+    # Dicionário com os limites de tokens para cada modelo
+    limites_tokens_modelo = {
+        'llama3-70b-8192': 8192,
+        'llama3-8b-8192': 8192,
         'mixtral-8x7b-32768': 32768,
-        'gemma-7b-it': 8192 
-    } 
+        'gemma-7b-it': 8192
+    }
 
-    api_key = get_api_key()
-    if api_key is None:
-        api_key = display_api_key_input()
-        if api_key is None:
-            st.warning("Please enter your GROQ_API_KEY to use the app.")
+    # Obtém a chave de API do usuário
+    chave_api = obter_chave_api()
+    if chave_api is None:
+        # Se a chave de API não foi encontrada, exibe um campo de entrada para o usuário inserir
+        chave_api = exibir_entrada_chave_api()
+        if chave_api is None:
+            st.warning("Por favor, insira sua GROQ_API_KEY para usar o aplicativo.")
             return
 
     
-    col1, col2 = st.columns([1, 1])  # Adjust the column widths as needed
+    col1, col2 = st.columns([1, 1])  # Cria duas colunas na página
     with col1:
-        selected_model = st.selectbox(
-            'Select Model',
-            options=list(MODEL_TOKEN_LIMITS.keys()),
+        # Exibe uma caixa de seleção para escolher o modelo
+        modelo_selecionado = st.selectbox(
+            'Selecionar Modelo',
+            options=list(LIMITES_TOKENS_MODELO.keys()),
             index=0,
-            key='model_selection'
+            key='selecao_modelo'
         )
-        st.session_state.model = selected_model
-        st.session_state.max_tokens = MODEL_TOKEN_LIMITS[selected_model]
+        st.session_state.modelo = modelo_selecionado
+        st.session_state.max_tokens = LIMITES_TOKENS_MODELO[modelo_selecionado]
 
     with col2:
-        temperature = st.slider(
-            "Set Temperature",
+        # Exibe um controle deslizante para ajustar a temperatura (criatividade) do modelo
+        temperatura = st.slider(
+            "Definir Temperatura",
             min_value=0.0,
             max_value=1.0,
-            value=st.session_state.get('temperature', 0.3),
+            value=st.session_state.get('temperatura', 0.3),
             step=0.01,
-            key='temperature'
+            key='temperatura'
         )
             
-    st.title("AutoGroq") 
+    st.title("AutoGroq")  # Exibe o título da página
         
-    # Ensure default values for session state are set     
-    if "discussion" not in st.session_state: 
-        st.session_state.discussion = ""
-    if "whiteboard" not in st.session_state: 
-        st.session_state.whiteboard = "" # Apply CSS classes to elements 
-    
-    with st.sidebar: 
-        st.markdown('<div class="sidebar">', unsafe_allow_html=True) 
-        st.markdown('</div>', unsafe_allow_html=True) 
+    # Garante que os valores padrão para a discussão e o whiteboard estejam definidos
+    if "discussao" not in st.session_state:
+        st.session_state.discussao = ""
+    if "whiteboard" not in st.session_state:
+        st.session_state.whiteboard = ""
 
-    display_agents() 
-    
-    with st.container(): 
-        st.markdown('<div class="main">', unsafe_allow_html=True) 
-        display_user_request_input() 
-        display_rephrased_request() 
-        st.markdown('<div class="discussion-whiteboard">', unsafe_allow_html=True) 
-        display_discussion_and_whiteboard() 
-        st.markdown('</div>', unsafe_allow_html=True) 
-        st.markdown('<div class="user-input">', unsafe_allow_html=True) 
-        display_user_input() 
-        st.markdown('</div>', unsafe_allow_html=True) 
-        display_reset_and_upload_buttons() 
-        st.markdown('</div>', unsafe_allow_html=True) 
+    with st.sidebar:
+        # Adiciona um elemento sidebar à página
+        st.markdown('<div class="sidebar">', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    display_download_button()        
+    exibir_agentes()  # Exibe os agentes disponíveis
     
-if __name__ == "__main__": 
-    main()
+    with st.container():
+        # Cria um contêiner para o conteúdo principal
+        st.markdown('<div class="main">', unsafe_allow_html=True)
+        exibir_entrada_solicitacao_usuario()  # Exibe um campo de entrada para o usuário digitar sua solicitação
+        exibir_solicitacao_reformulada()  # Exibe a solicitação do usuário reformulada
+        st.markdown('<div class="discussao-whiteboard">', unsafe_allow_html=True)
+        exibir_discussao_e_whiteboard()  # Exibe a discussão e o whiteboard
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="entrada-usuario">', unsafe_allow_html=True)
+        exibir_entrada_usuario()  # Exibe um campo de entrada para o usuário inserir mais informações
+        st.markdown('</div>', unsafe_allow_html=True)
+        exibir_botoes_resetar_e_enviar()  # Exibe botões para resetar
