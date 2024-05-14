@@ -1,6 +1,4 @@
-Aqui está a tradução do código com comentários em português explicando as funções para leigos que nunca viram o código:
 
-```python
 import streamlit as st
 
 # Importa os limites de tokens para cada modelo
